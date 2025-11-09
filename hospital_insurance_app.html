@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Health Insurance Prediction System</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Health Insurance Prediction System</h1>
+        <p>AI-Powered Eligibility & Cost Analysis</p>
+      </div>
+
+      <div class="content">
+        <div class="form-section">
+          <h2 class="section-title">Patient Information</h2>
+
+          <form id="patientForm">
+            <div class="form-group">
+              <label>Age (years)</label>
+              <input
+                type="number"
+                id="age"
+                min="18"
+                max="100"
+                value="35"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Gender</label>
+              <select id="gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>BMI</label>
+              <input
+                type="number"
+                id="bmi"
+                step="0.1"
+                min="15"
+                max="50"
+                value="25"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Number of Children</label>
+              <input
+                type="number"
+                id="children"
+                min="0"
+                max="10"
+                value="0"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Smoking Status</label>
+              <select id="smoker" required>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Region</label>
+              <select id="region" required>
+                <option value="Northeast">Northeast</option>
+                <option value="Northwest">Northwest</option>
+                <option value="Southeast">Southeast</option>
+                <option value="Southwest">Southwest</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Pre-existing Conditions</label>
+              <select id="pre_existing_conditions" required>
+                <option value="None">None</option>
+                <option value="Diabetes">Diabetes</option>
+                <option value="Hypertension">Hypertension</option>
+                <option value="Heart Disease">Heart Disease</option>
+                <option value="Asthma">Asthma</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Employment Status</label>
+              <select id="employment_status" required>
+                <option value="Employed">Employed</option>
+                <option value="Self-Employed">Self-Employed</option>
+                <option value="Unemployed">Unemployed</option>
+                <option value="Retired">Retired</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Annual Income ($)</label>
+              <input
+                type="number"
+                id="annual_income"
+                min="0"
+                value="50000"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Previous Claims</label>
+              <input
+                type="number"
+                id="previous_claims"
+                min="0"
+                max="20"
+                value="0"
+                required
+              />
+            </div>
+
+            <div class="button-group">
+              <button type="submit" class="btn-predict" id="predictBtn">
+                Predict
+              </button>
+              <button type="button" class="btn-clear" onclick="clearForm()">
+                Clear
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="results-section">
+          <h2 class="section-title">Prediction Results</h2>
+
+          <div id="resultsContainer">
+            <div class="results-card">
+              <h3 style="color: #667eea; margin-bottom: 15px">
+                Eligibility Status
+              </h3>
+              <div class="result-row">
+                <span>Status:</span>
+                <span class="result-value" id="eligibilityStatus">-</span>
+              </div>
+              <div class="result-row">
+                <span>Confidence:</span>
+                <span class="result-value" id="confidenceValue">-</span>
+              </div>
+              <div class="confidence-bar">
+                <div
+                  class="confidence-fill"
+                  id="confidenceFill"
+                  style="width: 0%"
+                >
+                  0%
+                </div>
+              </div>
+            </div>
+
+            <div class="results-card">
+              <h3 style="color: #667eea; margin-bottom: 15px">Cost Estimate</h3>
+              <div class="result-row">
+                <span>Annual Premium:</span>
+                <span
+                  class="result-value"
+                  id="costEstimate"
+                  style="color: #667eea"
+                  >-</span
+                >
+              </div>
+              <div class="result-row">
+                <span>Monthly Premium:</span>
+                <span
+                  class="result-value"
+                  id="monthlyEstimate"
+                  style="color: #667eea"
+                  >-</span
+                >
+              </div>
+            </div>
+
+            <div
+              id="riskFactors"
+              style="background: white; padding: 15px; border-radius: 10px"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("patientForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          predictInsurance();
+        });
+
+      async function predictInsurance() {
+        const predictBtn = document.getElementById("predictBtn");
+        const resultsContainer = document.getElementById("resultsContainer");
+
+        // Collect form data
+        const data = {
+          age: parseInt(document.getElementById("age").value),
+          gender: document.getElementById("gender").value,
+          bmi: parseFloat(document.getElementById("bmi").value),
+          children: parseInt(document.getElementById("children").value),
+          smoker: document.getElementById("smoker").value,
+          region: document.getElementById("region").value,
+          pre_existing_conditions: document.getElementById(
+            "pre_existing_conditions"
+          ).value,
+          employment_status: document.getElementById("employment_status").value,
+          annual_income: parseInt(
+            document.getElementById("annual_income").value
+          ),
+          previous_claims: parseInt(
+            document.getElementById("previous_claims").value
+          ),
+        };
+
+        // Disable button and show loading
+        predictBtn.disabled = true;
+        predictBtn.textContent = "Predicting...";
+
+        try {
+          const response = await fetch("http://localhost:5300/api/predict", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const result = await response.json();
+
+          // Display results from API
+          displayResults(result, data);
+        } catch (error) {
+          console.error("Prediction error:", error);
+          resultsContainer.innerHTML = `
+            <div class="error">
+              <strong>Error:</strong> Unable to connect to prediction service. 
+              Please ensure the Flask backend is running on http://localhost:5300
+            </div>
+          `;
+        } finally {
+          predictBtn.disabled = false;
+          predictBtn.textContent = "Predict";
+        }
+      }
+
+      function displayResults(result, inputData) {
+        // Extract results from API response
+        const isEligible = result.eligible === 1 || result.eligible === true;
+        const confidence = Math.round(result.eligibility_probability * 100);
+        const annualCost = result.predicted_cost || 0;
+        const monthlyCost = result.monthly_cost || annualCost / 12;
+
+        // Update eligibility status
+        const statusEl = document.getElementById("eligibilityStatus");
+        statusEl.textContent = isEligible ? "ELIGIBLE" : "NOT ELIGIBLE";
+        statusEl.className =
+          "result-value " + (isEligible ? "eligible-yes" : "eligible-no");
+
+        // Update confidence
+        document.getElementById("confidenceValue").textContent =
+          confidence + "%";
+
+        const fillEl = document.getElementById("confidenceFill");
+        fillEl.style.width = confidence + "%";
+        fillEl.textContent = confidence + "%";
+
+        // Update cost estimates
+        document.getElementById("costEstimate").textContent =
+          "$" +
+          annualCost.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+        document.getElementById("monthlyEstimate").textContent =
+          "$" +
+          monthlyCost.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+
+        // Display risk factors
+        displayRiskFactors(inputData, result.risk_factors);
+      }
+
+      function displayRiskFactors(data, apiRiskFactors) {
+        let risks =
+          '<h4 style="margin-bottom: 10px; color: #495057;">Key Risk Factors:</h4>';
+
+        // Use API risk factors if available
+        if (
+          apiRiskFactors &&
+          Array.isArray(apiRiskFactors) &&
+          apiRiskFactors.length > 0
+        ) {
+          apiRiskFactors.forEach((risk) => {
+            const color = risk.severity === "high" ? "#dc3545" : "#ffc107";
+            risks += `<p style="color: ${color}; margin: 5px 0;">• ${
+              risk.factor || risk
+            }</p>`;
+          });
+        } else {
+          // Fallback to client-side risk assessment
+          if (data.smoker === "Yes")
+            risks +=
+              '<p style="color: #dc3545; margin: 5px 0;">• Smoking status (High impact)</p>';
+          if (data.pre_existing_conditions !== "None")
+            risks +=
+              '<p style="color: #dc3545; margin: 5px 0;">• Pre-existing condition: ' +
+              data.pre_existing_conditions +
+              "</p>";
+          if (data.bmi > 30)
+            risks +=
+              '<p style="color: #ffc107; margin: 5px 0;">• High BMI (' +
+              data.bmi +
+              ")</p>";
+          if (data.age > 50)
+            risks +=
+              '<p style="color: #ffc107; margin: 5px 0;">• Age factor (' +
+              data.age +
+              " years)</p>";
+          if (data.previous_claims > 3)
+            risks +=
+              '<p style="color: #ffc107; margin: 5px 0;">• Multiple previous claims (' +
+              data.previous_claims +
+              ")</p>";
+          if (
+            risks ===
+            '<h4 style="margin-bottom: 10px; color: #495057;">Key Risk Factors:</h4>'
+          ) {
+            risks += '<p style="color: #28a745;">• Low risk profile</p>';
+          }
+        }
+
+        document.getElementById("riskFactors").innerHTML = risks;
+      }
+
+      function clearForm() {
+        document.getElementById("patientForm").reset();
+        document.getElementById("eligibilityStatus").textContent = "-";
+        document.getElementById("confidenceValue").textContent = "-";
+        document.getElementById("confidenceFill").style.width = "0%";
+        document.getElementById("confidenceFill").textContent = "0%";
+        document.getElementById("costEstimate").textContent = "-";
+        document.getElementById("monthlyEstimate").textContent = "-";
+        document.getElementById("riskFactors").innerHTML = "";
+      }
+    </script>
+  </body>
+</html>
